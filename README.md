@@ -15,6 +15,7 @@ Follow the steps below to install Docker in Termux:
 pkg update -y && pkg upgrade -y
 ```
 
+## Install Qemu and setup Environment
 3. Install the necessary dependencies by running the following command:
 ```bash
 pkg install qemu-utils qemu-common qemu-system-x86_64-headless wget -y
@@ -72,39 +73,49 @@ sed -i -E 's/(local kernel_opts)=.*/\1="console=ttyS0"/' /sbin/setup-disk
 ```
 If this does not work check the location of setup-disk, if not in `/sbin` it may be in `/usr/sbin`
 
-12. Run setup to install to disk
+12. (optional) Configure the answerfile to your local keymap and language (`gb`/`us`):
+```bash
+sed -i 's/^KEYMAPOPTS=.*/KEYMAPOPTS="gb"/' answerfile
+```    
+
+13. Run setup to install to disk
 ```bash
 setup-alpine -f answerfile
 ```
 
-13. Once installation is complete, power off the VM (command ``poweroff``)
+14. Once installation is complete, power off the VM (command ``poweroff``)
 
+## Create Boot Executable
+> **Boot instructions:** 
 > Boot again without cdrom:
-```bash
-qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 -drive if=pflash,format=raw,read-only=on,file=$PREFIX/share/qemu/edk2-x86_64-code.fd -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic alpine.img
-```
+> ```bash
+> qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 -drive if=pflash,format=raw,read-only=on,file=$PREFIX/share/qemu/edk2-x86_64-> code.fd -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic alpine.img
+> ```
 > Quit emulation with: `Ctrl+a x`
+> Now we will create a boot script with this command
 
-14. Outside the emulation install nano with `apk install nano` and run:
+15. Outside the emulation install nano with `apk install nano` and run:
 ```bash
 nano run_qemu.sh
 ```
 
-15. In the text editor, write the following:
+16. In the text editor, write the following:
 ```bash
 #!/bin/bash
 qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 -drive if=pflash,format=raw,read-only=on,file=$PREFIX/share/qemu/edk2-x86_64-code.fd -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic alpine.img
 ```
 Save and close the file. In nano, you can do this by pressing Ctrl+X, then Y to confirm saving, and then Enter to confirm the filename.
 
-16. Set the script as executable with the chmod command:
+17. Set the script as executable with the chmod command:
 ```bash
 chmod +x run_qemu.sh
 ```
 
-17. Now you can connect to the emulation using: `./run_qemu.sh`
+18. Now you can connect to the emulation using: `./run_qemu.sh`
 
-18. Update system and install docker:
+
+## Install Docker
+19. Update system and install docker:
 ```bash
 
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
@@ -113,17 +124,17 @@ echo "nameserver 8.8.4.4" >> /etc/resolv.conf
 apk update && apk add docker
 ```
 
-19. Start docker:
+20. Start docker:
 ```bash
 service docker start
 ```
 
-20. Enable docker on boot:
+21. Enable docker on boot:
 ```bash
 rc-update add docker
 ```
 
-21. Check docker install successfully or not:
+22. Check docker install successfully or not:
 ```bash
 docker run hello-world
 ```
