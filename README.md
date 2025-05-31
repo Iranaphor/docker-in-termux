@@ -25,9 +25,9 @@ pkg install qemu-utils qemu-common qemu-system-x86_64-headless wget -y
 mkdir alpine && cd alpine
 ```
 
-5. Download Alpine Linux 3.20.2 (virt optimized) ISO:
+5. Download Alpine Linux 3.22.0 (virt optimized) ISO:
 ```bash
-wget http://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.2-x86_64.iso
+wget http://dl-cdn.alpinelinux.org/alpine/v3.22/releases/x86_64/alpine-virt-3.22.0-x86_64.iso
 ```
 
 6. Create disk (note it won't actually take 5GB of space, more like 500-600MB):
@@ -38,7 +38,7 @@ qemu-img create -f qcow2 alpine.img 5G
 7. Boot it up:
 Here we're using 1024MB of memory and 2 cpus
 ```bash
-qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 -drive if=pflash,format=raw,read-only=on,file=$PREFIX/share/qemu/edk2-x86_64-code.fd -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -cdrom alpine-virt-3.20.2-x86_64.iso -nographic alpine.img
+qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 -drive if=pflash,format=raw,read-only=on,file=$PREFIX/share/qemu/edk2-x86_64-code.fd -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -cdrom alpine-virt-3.22.0-x86_64.iso -nographic alpine.img
 ```
 > you can get number of useable cpus using `nproc` and total memory using `free -m | grep -oP '\d+' | head -n 1`
 8. Login with username ``root`` (no password)
@@ -70,6 +70,7 @@ wget https://raw.githubusercontent.com/cyberkernelofficial/docker-in-termux/main
 ```bash
 sed -i -E 's/(local kernel_opts)=.*/\1="console=ttyS0"/' /sbin/setup-disk
 ```
+If this does not work check the location of setup-disk, if not in `/sbin` it may be in `/usr/sbin`
 
 12. Run setup to install to disk
 ```bash
@@ -78,25 +79,32 @@ setup-alpine -f answerfile
 
 13. Once installation is complete, power off the VM (command ``poweroff``)
 
-14. Boot again without cdrom:
+> Boot again without cdrom:
 ```bash
 qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 -drive if=pflash,format=raw,read-only=on,file=$PREFIX/share/qemu/edk2-x86_64-code.fd -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic alpine.img
 ```
+> Quit emulation with: `Ctrl+a x`
 
-A - 
-`nano run_qemu.sh`
-In the text editor, write the following:
+14. Outside the emulation install nano with `apk install nano` and run:
+```bash
+nano run_qemu.sh
+```
+
+15. In the text editor, write the following:
 ```bash
 #!/bin/bash
 qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 -drive if=pflash,format=raw,read-only=on,file=$PREFIX/share/qemu/edk2-x86_64-code.fd -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic alpine.img
 ```
 Save and close the file. In nano, you can do this by pressing Ctrl+X, then Y to confirm saving, and then Enter to confirm the filename.
 
-B - chmod command: `chmod +x run_qemu.sh`
+16. Set the script as executable with the chmod command:
+```bash
+chmod +x run_qemu.sh
+```
 
-C - `./run_qemu.sh`
+17. Now you can connect to the emulation using: `./run_qemu.sh`
 
-15. Update system and install docker:
+18. Update system and install docker:
 ```bash
 
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
@@ -105,17 +113,17 @@ echo "nameserver 8.8.4.4" >> /etc/resolv.conf
 apk update && apk add docker
 ```
 
-16. Start docker:
+19. Start docker:
 ```bash
 service docker start
 ```
 
-17. Enable docker on boot:
+20. Enable docker on boot:
 ```bash
 rc-update add docker
 ```
 
-18. Check docker install successfully or not:
+21. Check docker install successfully or not:
 ```bash
 docker run hello-world
 ```
